@@ -7,9 +7,6 @@ SERVER_URL = "https://fleet-monitor-service-963859706153.europe-west1.run.app"
 WEBHOOK_URL = f"{SERVER_URL}/webhook"
 
 def set_webhook():
-    """
-    Imposta il webhook di Telegram per puntare al nostro server Flask.
-    """
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={WEBHOOK_URL}"
     response = requests.get(url)
     if response.status_code == 200 and response.json().get("ok"):
@@ -20,7 +17,7 @@ def set_webhook():
         print(response.text)
 
 if __name__ == "__main__":
-    if not SERVER_URL or "L_URL_CHE_OTTERRAI" in SERVER_URL:
-        print("ERRORE: Devi prima deployare il server su Cloud Run e impostare la variabile SERVER_URL.")
+    if not SERVER_URL or "URL Fututo" in SERVER_URL:
+        print("ERRORE")
     else:
         set_webhook()
