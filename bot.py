@@ -1,16 +1,8 @@
-# bot.py
 import requests
 import os
 
-# Carica le variabili d'ambiente (lo useremo dopo per il deploy)
-# from dotenv import load_dotenv
-# load_dotenv()
+TELEGRAM_TOKEN = "token_bot"
 
-# Per ora, mettiamo il token qui. In produzione, useremo le variabili d'ambiente.
-TELEGRAM_TOKEN = "8380003470:AAEbg_USCYqtMDto4O5I9XPhQS7vv41Nbpw"
-
-
-# L'URL del nostro server che verrà deployato su Cloud Run
 SERVER_URL = "https://fleet-monitor-service-963859706153.europe-west1.run.app" 
 WEBHOOK_URL = f"{SERVER_URL}/webhook"
 
