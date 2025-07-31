@@ -18,17 +18,14 @@ table_ref = f"{project_id}.{dataset_id}.{table_id}"
 user_states = {}
 
 def handle_start(chat_id):
-    """Gestisce il comando /start e chiede l'username."""
     user_states[chat_id] = "AWAITING_USERNAME"
     return "Ciao! Benvenuto nel sistema di monitoraggio. Per favore, inserisci il tuo username (es. veicolo_01):"
 
 def handle_username(chat_id, username):
-    """Gestisce l'inserimento dell'username e chiede la posizione."""
     user_states[chat_id] = {"username": username}
-    return f"Grazie, {username}! Ora condividi la tua 'Posizione in tempo reale' usando l'opzione Allega > Posizione."
+    return f"Grazie, {username}! Ora condividi la tua 'Posizione in tempo reale' usando l'opzione Allega la tua Posizione."
 
 def handle_location(chat_id, location_data):
-    """Gestisce la ricezione della posizione e la salva su BigQuery."""
     if chat_id not in user_states or "username" not in user_states.get(chat_id, {}):
         return "Errore: non ho ancora un username per te. Usa /start per iniziare."
 
@@ -49,11 +46,10 @@ def handle_location(chat_id, location_data):
         return None
     else:
         print(f"Errore durante l'inserimento in BigQuery: {errors}")
-        return "Si è verificato un errore nel salvataggio della tua posizione."
+        return "Si è verificato un errore nel salvataggio della posizione."
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    """Riceve tutti gli aggiornamenti da Telegram."""
     data = request.get_json()
     
     message = data.get('message') or data.get('edited_message')
@@ -79,8 +75,6 @@ def webhook():
 
 
 def send_telegram_message(chat_id, text):
-    """Funzione helper per inviare messaggi all'utente."""
-
     TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
     if not TELEGRAM_TOKEN:
         print("ERRORE: La variabile d'ambiente TELEGRAM_TOKEN non è impostata.")
@@ -95,7 +89,6 @@ def send_telegram_message(chat_id, text):
 
 @app.route('/')
 def dashboard():
-    """Mostra la dashboard con la mappa e le statistiche, gestendo i filtri."""
 
     selected_user = request.args.get('username', 'all')
     start_date_str = request.args.get('start_date', '')
