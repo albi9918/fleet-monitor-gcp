@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Monitor Pro</title>
+    <!-- Google Fonts e Leaflet -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --light-gray: #f8f9fa;
+            --gray-text: #6c757d;
+            --dark-text: #212529;
+            --border-color: #dee2e6;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--light-gray);
+        }
+        #sidebar {
+            width: 480px;
+            min-width: 450px;
+            padding: 24px;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.08);
+            background-color: #ffffff;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        #map { flex-grow: 1; height: 100vh; }
+        h1, h2 { color: var(--dark-text); }
+        h1 { font-size: 1.8rem; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+        h2 { font-size: 1.1rem; text-transform: uppercase; color: var(--gray-text); letter-spacing: 0.5px; margin-top: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
+        .card { background-color: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .stat-item { background-color: var(--light-gray); padding: 12px; border-radius: 6px; }
+        .stat-label { font-weight: 500; color: var(--gray-text); display: block; margin-bottom: 4px; font-size: 0.8rem; }
+        .stat-value { font-weight: 600; font-size: 1rem; color: var(--dark-text); }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
+        label, .form-label { font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 6px; }
+        select, input[type="date"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.9rem; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; background-color: var(--primary-color); color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0b5ed7; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--light-gray); font-weight: 600; }
+        tbody tr:hover { background-color: #f1f3f5; }
+        .badge { background-color: var(--primary-color); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h1>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.083 9A6.002 6.002 0 0 1 12 4a6 6 0 0 1 6 6v2a3 3 0 0 0 3 3h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1a3 3 0 0 0-3-3v-2a6 6 0 0 1-1.917-4M14 18V8a2 2 0 0 0-2-2h-1a2 2 0 0 0-2 2v10l-3 3-1 1h12a2 2 0 0 0 1.75-2.97Z"/></svg>
+            <span>Monitoraggio Flotta di Veicoli</span>
+        </h1>
+        
+        <div class="card">
+            <h2>Statistiche Generali</h2>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Veicoli Tracciati</span>
+                    <span class="stat-value">{{ stats.total_vehicles }}</span>
+                </div>
+                 <div class="stat-item">
+                    <span class="stat-label">Data Inizio</span>
+                    <span class="stat-value">{{ stats.start_date.strftime('%d/%m/%y') if stats.start_date else 'N/D' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Filtri di Ricerca</h2>
+            <form action="/" method="get">
+                <div>
+                    <label for="username" class="form-label">Seleziona Veicolo</label>
+                    <select name="username" id="username">
+                        <option value="all">-- Tutti i Veicoli --</option>
+                        {% for user in all_users %}
+                        <option value="{{ user }}" {% if selected_user == user %}selected{% endif %}>{{ user }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-grid" style="margin-top: 16px;">
+                    <div>
+                        <label for="start_date" class="form-label">Da</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}">
+                    </div>
+                     <div>
+                        <label for="end_date" class="form-label">A</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}">
+                    </div>
+                </div>
+                <button type="submit" style="margin-top: 16px;">Applica Filtri</button>
+            </form>
+        </div>
+        
+        <h2>Dettaglio Rilevazioni</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Veicolo</th>
+                    <th>Giorno</th>
+                    <th>Inizio</th>
+                    <th>Fine</th>
+                    <th>Punti</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rilevazione in rilevazioni %}
+                <tr>
+                    <td>{{ rilevazione.username }}</td>
+                    <td>{{ rilevazione.giorno.strftime('%d-%m-%Y') }}</td>
+                    <td title="Ora UTC">{{ rilevazione.ora_inizio.strftime('%H:%M:%S') }}</td>
+                    <td title="Ora UTC">{{ rilevazione.ora_fine.strftime('%H:%M:%S') }}</td>
+                    <td><span class="badge">{{ rilevazione.punti_raccolti }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px;">Nessuna rilevazione trovata per i filtri selezionati.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        const map = L.map('map').setView([42.5, 12.5], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        const trajectories = JSON.parse('{{ trajectories | safe }}');
+        const colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6'];
+        let colorIndex = 0;
+        const bounds = L.latLngBounds();
+
+        for (const username in trajectories) {
+            const path = trajectories[username];
+            if (path.length > 1) {
+                const polyline = L.polyline(path, { 
+                    color: colors[colorIndex % colors.length],
+                    weight: 3,
+                    opacity: 0.8
+                }).addTo(map);
+                polyline.bindPopup(`Traiettoria di: <strong>${username}</strong>`);
+                bounds.extend(polyline.getBounds());
+            }
+            colorIndex++;
+        }
+
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    </script>
+</body>
+</html>
