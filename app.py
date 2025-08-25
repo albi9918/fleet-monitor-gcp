@@ -1,33 +1,38 @@
 import os
 import json
 from datetime import datetime, timezone
-
 import requests
 from flask import Flask, request, jsonify, render_template
 from google.cloud import bigquery
 
+
 app = Flask(__name__)
 
 bq_client = bigquery.Client()
+
 
 project_id = bq_client.project
 dataset_id = "fleet_data"
 table_id = "positions"
 table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
+
 user_states = {}
 
 def handle_start(chat_id):
+    
     user_states[chat_id] = "AWAITING_USERNAME"
-    return "Ciao! Benvenuto nel sistema di monitoraggio. Per favore, inserisci il tuo username (es. veicolo_01):"
+    return "Inserire Username:"
 
 def handle_username(chat_id, username):
+    
     user_states[chat_id] = {"username": username}
-    return f"Grazie, {username}! Ora condividi la tua 'Posizione in tempo reale' usando l'opzione Allega la tua Posizione."
+    return f"Condividere posizione in tempo reale:"
 
 def handle_location(chat_id, location_data):
+    
     if chat_id not in user_states or "username" not in user_states.get(chat_id, {}):
-        return "Errore: non ho ancora un username per te. Usa /start per iniziare."
+        return "Errore. Usare /start per iniziare."
 
     username = user_states[chat_id]["username"]
     latitude = location_data['latitude']
@@ -46,10 +51,14 @@ def handle_location(chat_id, location_data):
         return None
     else:
         print(f"Errore durante l'inserimento in BigQuery: {errors}")
-        return "Si è verificato un errore nel salvataggio della posizione."
+        return "Errore nel salvataggio della tua posizione."
+
+
+
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    
     data = request.get_json()
     
     message = data.get('message') or data.get('edited_message')
@@ -75,6 +84,7 @@ def webhook():
 
 
 def send_telegram_message(chat_id, text):
+
     TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
     if not TELEGRAM_TOKEN:
         print("ERRORE: La variabile d'ambiente TELEGRAM_TOKEN non è impostata.")
@@ -115,6 +125,7 @@ def dashboard():
     if not stats_result or stats_result.total_vehicles is None:
         stats_result = {'total_vehicles': 0, 'start_date': None}
 
+    
     query_rilevazioni = f"""
         SELECT username, DATE(timestamp, 'Europe/Rome') as giorno,
                MIN(timestamp) as ora_inizio, MAX(timestamp) as ora_fine,
@@ -125,6 +136,7 @@ def dashboard():
     rilevazioni_job = bq_client.query(query_rilevazioni)
     rilevazioni = list(rilevazioni_job.result())
 
+    
     query_trajectories = f"""
         SELECT username, latitude, longitude FROM `{table_ref}`
         {where_clause} ORDER BY timestamp
@@ -136,10 +148,12 @@ def dashboard():
             trajectories_data[row.username] = []
         trajectories_data[row.username].append([row.latitude, row.longitude])
 
+    
     query_all_users = f"SELECT DISTINCT username FROM `{table_ref}` ORDER BY username"
     all_users_job = bq_client.query(query_all_users)
     all_known_users = [row.username for row in all_users_job.result()]
 
+    
     return render_template(
         'dashboard.html',
         stats=stats_result,
@@ -147,12 +161,13 @@ def dashboard():
         trajectories=json.dumps(trajectories_data),
         all_users=all_known_users,
         selected_user=selected_user,
-        start_date=start_date_str, 
-        end_date=end_date_str      
+        start_date=start_date_str,
+        end_date=end_date_str     
     )
 
 
 
 
 if __name__ == '__main__':
+    
     app.run(host='0.0.0.0', port=8080, debug=True)
