@@ -68,7 +68,7 @@ def webhook():
 def send_telegram_message(chat_id, text):
     TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
     if not TELEGRAM_TOKEN:
-        print("ERRORE: La variabile d'ambiente TELEGRAM_TOKEN non è impostata.")
+        print("ERRORE: La variabile TELEGRAM_TOKEN non è impostata.")
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": chat_id, "text": text}
@@ -127,4 +127,5 @@ def dashboard():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
+
 
