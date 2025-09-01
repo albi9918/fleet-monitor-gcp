@@ -4,13 +4,18 @@ from datetime import datetime, timezone
 import requests
 from flask import Flask, request, jsonify, render_template
 from google.cloud import bigquery
+from google.oauth2 import service_account
 
 app = Flask(__name__)
-bq_client = bigquery.Client()
+
+CREDENTIALS_PATH = "credentials.json"
+
+credentials = service_account.Credentials.from_service_account_file(CREDENTIALS_PATH)
+
+bq_client = bigquery.Client(credentials=credentials)
 
 project_id = bq_client.project
 dataset_id = "fleet_data"
-
 table_id = "positions" 
 table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
@@ -127,5 +132,6 @@ def dashboard():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
+
 
 
