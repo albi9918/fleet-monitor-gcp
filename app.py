@@ -40,7 +40,7 @@ def handle_location(chat_id, location_data):
         return None
     else:
         print(f"Errore durante l'inserimento in BigQuery: {errors}")
-        return "Errore nel salvataggio della tua posizione."
+        return "Errore nel salvataggio della posizione."
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -127,3 +127,4 @@ def dashboard():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
+
