@@ -10,14 +10,15 @@ def set_webhook():
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={WEBHOOK_URL}"
     response = requests.get(url)
     if response.status_code == 200 and response.json().get("ok"):
-        print("Webhook impostato con successo!")
+        print("Webhook impostato")
         print(response.json())
     else:
         print("Errore nell'impostazione del webhook:")
         print(response.text)
 
 if __name__ == "__main__":
-    if not SERVER_URL or "URL Fututo" in SERVER_URL:
+    if not SERVER_URL or "URL" in SERVER_URL:
         print("ERRORE")
     else:
         set_webhook()
+
