@@ -2,7 +2,6 @@ import requests
 import os
 
 TELEGRAM_TOKEN = "token_bot"
-
 SERVER_URL = "https://fleet-monitor-service-963859706153.europe-west1.run.app" 
 WEBHOOK_URL = f"{SERVER_URL}/webhook"
 
@@ -21,4 +20,5 @@ if __name__ == "__main__":
         print("ERRORE")
     else:
         set_webhook()
+
 
