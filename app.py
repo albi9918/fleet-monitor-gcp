@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify, render_template
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
+# Inizializzazione
 app = Flask(__name__)
 
 CREDENTIALS_PATH = "credentials.json"
@@ -19,16 +20,20 @@ dataset_id = "fleet_data"
 table_id = "positions" 
 table_ref = f"{project_id}.{dataset_id}.{table_id}"
 
+
 user_states = {}
 
+#Gestione Username
 def handle_start(chat_id):
     user_states[chat_id] = "AWAITING_USERNAME"
     return "Inserire Username:"
 
+#Gestione Posizione
 def handle_username(chat_id, username):
     user_states[chat_id] = {"username": username}
     return "Condividere posizione in tempo reale:"
 
+#Gestione Posizione
 def handle_location(chat_id, location_data):
     if chat_id not in user_states or "username" not in user_states.get(chat_id, {}):
         return "Errore. Usare /start per iniziare."
@@ -47,6 +52,7 @@ def handle_location(chat_id, location_data):
         print(f"Errore durante l'inserimento in BigQuery: {errors}")
         return "Errore nel salvataggio della posizione."
 
+#Gestione Dati Provenienti da Telegram e Messaggi
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
@@ -79,6 +85,7 @@ def send_telegram_message(chat_id, text):
     payload = {"chat_id": chat_id, "text": text}
     requests.post(url, json=payload)
 
+#Gestione Dashboard
 @app.route('/')
 def dashboard():
     selected_user = request.args.get('username', 'all')
@@ -132,6 +139,3 @@ def dashboard():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
-
-
-
